@@ -1,0 +1,15 @@
+<ion-header>
+  <ion-toolbar> <ion-title>Clients</ion-title> </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-list>
+    <ion-item *ngFor="let client of clients">
+      <ion-label>
+        <h3>{{ client.firstname }} {{ client.lastname }}</h3>
+        <p>Identificación: {{ client.identification }}</p>
+        <p>Nacido el {{ formatDate(client.birthdate) }}</p>
+      </ion-label>
+    </ion-item>
+  </ion-list>
+</ion-content>
