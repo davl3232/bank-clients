@@ -29,7 +29,12 @@ export class ClientListPage implements OnInit {
 
     this.clients = await this.clientService.getClients().toPromise();
 
-    loading.dismiss();
+    await loading.dismiss();
+  }
+
+  async refreshClients(event: any) {
+    await this.fetchClients();
+    event.target.complete();
   }
 
   async addClient() {
