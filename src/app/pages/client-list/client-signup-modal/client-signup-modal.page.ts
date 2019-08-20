@@ -1,5 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { AlertController, ModalController } from '@ionic/angular';
+import {
+  AlertController,
+  ModalController,
+  ToastController,
+} from '@ionic/angular';
 import { AlertOptions } from '@ionic/core';
 import { ClientService } from 'src/app/services/client.service';
 import { ValidationService } from 'src/app/services/validation.service';
@@ -35,6 +39,7 @@ export class ClientSignupModalPage implements OnInit {
     private validationService: ValidationService,
     private modalCtrl: ModalController,
     private alertCtrl: AlertController,
+    private toastCtrl: ToastController,
   ) {}
 
   ngOnInit() {}
@@ -121,6 +126,13 @@ export class ClientSignupModalPage implements OnInit {
       });
       return;
     }
+
+    const toast = await this.toastCtrl.create({
+      color: 'success',
+      message: 'Cliente registrado exitosamente.',
+      duration: 2000,
+    });
+    await toast.present();
 
     await this.modalCtrl.dismiss();
   }
