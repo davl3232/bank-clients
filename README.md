@@ -7,11 +7,18 @@
 ```
 npm i -g @angular/cli
 npm i -g ionic
+npm i -g cordova
 npm i
 ```
-3. Ejecutar el servidor de desarrollo de ionic:
+3. Completar los pasos en https://ionicframework.com/docs/installation/android.
+### Ejecutar la aplicación
+- Para iniciar el servidor de desarrollo de ionic, ejecutar desde una terminal en la raíz del proyecto:
 ```
 ionic serve
+```
+- Para generar APK, ejecutar:
+```
+ionic cordova build android --prod --release
 ```
 
 ## Sustentación de diseño
