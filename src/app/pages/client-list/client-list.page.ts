@@ -20,7 +20,6 @@ export class ClientListPage implements OnInit {
     this.clientService
       .getClients()
       .subscribe(clients => (this.clients = clients));
-    this.addClient();
   }
 
   async addClient() {
