@@ -1,9 +1,10 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { Client } from '../model/client';
 import { ClientRecord } from '../model/client-record';
+import { ValidationService } from './validation.service';
 
 // Adapted from Angular's Tour of Heroes: https://angular.io/tutorial/toh-pt6
 @Injectable({ providedIn: 'root' })
@@ -14,50 +15,26 @@ export class ClientService {
     headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
   };
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private validationService: ValidationService,
+  ) {}
 
   getClients(): Observable<Client[]> {
-    const isString = (val: any) => typeof val === 'string';
-    const isValidDate = (val: any) =>
-      isString(val) &&
-      /^((0[1-9])|(1\d)|(2\d)|3[0-1])-((0[1-9])|1[0-2])-\d\d\d\d$/.test(val);
-    const isInThePast = (val: string) =>
-      new Date(
-        val
-          .split('-')
-          .reverse()
-          .join('-'),
-      ) < new Date();
-    const isValidBirthdate = (val: any) => isValidDate(val) && isInThePast(val);
-    const isValidIdentification = (val: any) =>
-      isString(val) && /^\d+$/.test(val);
-    const isValidName = (val: any) => isString(val) && /[~\w]+/.test(val);
-    const isValidClient = (client: Client) =>
-      isValidBirthdate(client.birthdate) &&
-      isValidIdentification(client.identification) &&
-      isValidName(client.firstname) &&
-      isValidName(client.lastname);
-
-    const filterUniqueClients = (clients: Client[]) => {
-      const visitedIdentifications = new Set();
-      const uniqueClients = [];
-      clients.forEach(client => {
-        if (!visitedIdentifications.has(client.identification)) {
-          uniqueClients.push(client);
-          visitedIdentifications.add(client.identification);
-        }
-      });
-      return uniqueClients;
-    };
-    const convertToArray = (clients: { [key: string]: Client }) =>
-      Object.keys(clients).map(key => clients[key]);
-    const filterValidClients = (clients: Client[]) =>
-      clients.filter(isValidClient);
-
     return this.http.get<{ [key: string]: Client }>(this.clientsUrl).pipe(
-      map(convertToArray),
-      map(filterValidClients),
-      map(filterUniqueClients),
+      map(this.convertToArray),
+      map(this.reverseDates),
+      map(this.filterValidClients),
+      map(this.filterUniqueClients),
+      tap(_ => this.log('fetched clients')),
+      catchError(this.handleError<Client[]>('getClients', [])),
+    );
+  }
+
+  getClientsUnfiltered(): Observable<Client[]> {
+    return this.http.get<{ [key: string]: Client }>(this.clientsUrl).pipe(
+      map(this.convertToArray),
+      map(this.reverseDates),
       tap(_ => this.log('fetched clients')),
       catchError(this.handleError<Client[]>('getClients', [])),
     );
@@ -76,12 +53,21 @@ export class ClientService {
 
   /** POST: add a new client to the server */
   addClient(client: Client): Observable<ClientRecord> {
-    return this.http
-      .post<ClientRecord>(this.clientsUrl, client, this.httpOptions)
-      .pipe(
-        tap(newRecord => this.log(`added client id=${newRecord.name}`)),
-        catchError(this.handleError<ClientRecord>('addClient')),
-      );
+    return this.getClientsUnfiltered().pipe(
+      switchMap(clients => {
+        if (clients.find(c => c.identification === client.identification)) {
+          throw new Error(
+            `Identification "${client.identification}" already exists.`,
+          );
+        }
+        return this.http
+          .post<ClientRecord>(this.clientsUrl, client, this.httpOptions)
+          .pipe(
+            tap(newRecord => this.log(`added client id=${newRecord.name}`)),
+            catchError(this.handleError<ClientRecord>('addClient')),
+          );
+      }),
+    );
   }
 
   /** PUT: update the client on the server */
@@ -93,6 +79,35 @@ export class ClientService {
       catchError(this.handleError<any>('updateClient')),
     );
   }
+
+  private convertToArray = (clients: { [key: string]: Client }) =>
+    Object.keys(clients).map(key => clients[key]);
+
+  private reverseDates = (clients: Client[]) =>
+    clients.map(client => ({
+      ...client,
+      birthdate:
+        typeof client.birthdate === 'string' &&
+        client.birthdate
+          .split('-')
+          .reverse()
+          .join('-'),
+    }));
+
+  private filterValidClients = (clients: Client[]) =>
+    clients.filter(this.validationService.isValidClient);
+
+  private filterUniqueClients = (clients: Client[]) => {
+    const visitedIdentifications = new Set();
+    const uniqueClients = [];
+    clients.forEach(client => {
+      if (!visitedIdentifications.has(client.identification)) {
+        uniqueClients.push(client);
+        visitedIdentifications.add(client.identification);
+      }
+    });
+    return uniqueClients;
+  };
 
   /**
    * Handle Http operation that failed.

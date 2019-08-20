@@ -1,0 +1,54 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Nuevo cliente</ion-title>
+    <ion-buttons slot="secondary">
+      <ion-button color="danger" (click)="closeModal()">
+        <ion-icon slot="icon-only" name="close"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-buttons slot="primary">
+      <ion-button color="success" (click)="createClient()">
+        <ion-icon slot="icon-only" name="checkmark"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-item>
+    <ion-label>Identificación</ion-label
+    ><ion-input
+      [(ngModel)]="identification"
+      type="text"
+      pattern="[0-9]*"
+      inputmode="numeric"
+      [clearInput]="true"
+    ></ion-input>
+  </ion-item>
+  <ion-item>
+    <ion-label>Nombre</ion-label
+    ><ion-input
+      [(ngModel)]="firstname"
+      type="text"
+      [clearInput]="true"
+    ></ion-input>
+  </ion-item>
+  <ion-item>
+    <ion-label>Apellido</ion-label
+    ><ion-input
+      [(ngModel)]="lastname"
+      type="text"
+      [clearInput]="true"
+    ></ion-input>
+  </ion-item>
+  <ion-item>
+    <ion-label>Fecha de nacimiento</ion-label>
+    <ion-datetime
+      [(ngModel)]="birthdate"
+      [monthShortNames]="monthShortNames"
+      cancelText="Cancelar"
+      doneText="Listo"
+    >
+    </ion-datetime>
+  </ion-item>
+</ion-content>
