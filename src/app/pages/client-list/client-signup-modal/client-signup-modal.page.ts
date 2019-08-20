@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import {
   AlertController,
+  LoadingController,
   ModalController,
   ToastController,
 } from '@ionic/angular';
@@ -40,6 +41,7 @@ export class ClientSignupModalPage implements OnInit {
     private modalCtrl: ModalController,
     private alertCtrl: AlertController,
     private toastCtrl: ToastController,
+    private loadingCtrl: LoadingController,
   ) {}
 
   ngOnInit() {}
@@ -50,6 +52,11 @@ export class ClientSignupModalPage implements OnInit {
   }
 
   async createClient() {
+    const loading = await this.loadingCtrl.create({
+      message: 'Validando datos de cliente...',
+    });
+    await loading.present();
+
     const newClient = {
       identification: this.identification,
       firstname: this.firstname,
@@ -65,6 +72,7 @@ export class ClientSignupModalPage implements OnInit {
     if (
       !this.validationService.isValidIdentification(newClient.identification)
     ) {
+      await loading.dismiss();
       await this.showAlert({
         ...alertOptions,
         subHeader: 'Identificación',
@@ -73,6 +81,7 @@ export class ClientSignupModalPage implements OnInit {
       return;
     }
     if (!this.validationService.isValidName(newClient.firstname)) {
+      await loading.dismiss();
       await this.showAlert({
         ...alertOptions,
         subHeader: 'Nombre',
@@ -81,6 +90,7 @@ export class ClientSignupModalPage implements OnInit {
       return;
     }
     if (!this.validationService.isValidName(newClient.lastname)) {
+      await loading.dismiss();
       await this.showAlert({
         ...alertOptions,
         subHeader: 'Apellido',
@@ -89,6 +99,7 @@ export class ClientSignupModalPage implements OnInit {
       return;
     }
     if (newClient.birthdate === '') {
+      await loading.dismiss();
       await this.showAlert({
         ...alertOptions,
         subHeader: 'Fecha de nacimiento',
@@ -97,6 +108,7 @@ export class ClientSignupModalPage implements OnInit {
       return;
     }
     if (!this.validationService.isOlderThan18(newClient.birthdate)) {
+      await loading.dismiss();
       await this.showAlert({
         ...alertOptions,
         subHeader: 'Fecha de nacimiento',
@@ -117,6 +129,7 @@ export class ClientSignupModalPage implements OnInit {
         })
         .toPromise();
     } catch (e) {
+      await loading.dismiss();
       await this.showAlert({
         ...alertOptions,
         subHeader: 'Identificación',
@@ -126,6 +139,8 @@ export class ClientSignupModalPage implements OnInit {
       });
       return;
     }
+
+    await loading.dismiss();
 
     const toast = await this.toastCtrl.create({
       color: 'success',

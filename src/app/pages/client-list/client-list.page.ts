@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ModalController } from '@ionic/angular';
+import { LoadingController, ModalController } from '@ionic/angular';
 import { Client } from 'src/app/model/client';
 import { ClientService } from 'src/app/services/client.service';
 import { ClientSignupModalPage } from './client-signup-modal/client-signup-modal.page';
@@ -14,12 +14,22 @@ export class ClientListPage implements OnInit {
   constructor(
     private clientService: ClientService,
     private modalCtrl: ModalController,
+    private loadingCtrl: LoadingController,
   ) {}
 
   ngOnInit() {
-    this.clientService
-      .getClients()
-      .subscribe(clients => (this.clients = clients));
+    this.fetchClients();
+  }
+
+  async fetchClients() {
+    const loading = await this.loadingCtrl.create({
+      message: 'Cargando clientes...',
+    });
+    await loading.present();
+
+    this.clients = await this.clientService.getClients().toPromise();
+
+    loading.dismiss();
   }
 
   async addClient() {
